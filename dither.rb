@@ -156,8 +156,7 @@ class BMP
   end
 end
 
-#bmp = BMP::Reader.new("lena512.bmp")
-bmp = BMP::Reader.new("sample.bmp")
+bmp = BMP::Reader.new(ARGV[1])
 
 p bmp.width  #=> show width of bmp
 p bmp.height #=> show height of bmp
@@ -170,40 +169,32 @@ bmp_w = BMP::Writer.new(bmp.width,bmp.height)
 #	end
 #end
 
-n = 2
+n = ARGV[0].to_i
+shift = 0
 
-if n == 4
-D4 = [[0, 8, 2, 10], 
-      [2, 4, 14, 6], 
-      [3, 11, 1, 9], 
-      [15, 7, 13, 5]]
+case n
+    when 2
+        shift = 4
+        DM = [[0, 2],
+              [3, 1]]
+    when 4
+        shift = 6
+        DM = [[0, 8, 2, 10], 
+              [2, 4, 14, 6], 
+              [3, 11, 1, 9], 
+              [15, 7, 13, 5]]
+    else
+        puts "No #{n}x#{n} dithering matrix support."
+end
 0.upto(bmp.height - 1) do |y|
-	i = y % 4
+	i = y % n
 	0.upto(bmp.width - 1) do |x|
-		j = x % 4
-		if (bmp[x,y].hex>>4) > D4[j][i]
+		j = x % n
+		if (bmp[x,y].hex>>shift) > DM[j][i]
 			bmp_w[x,y] = "ff"
 		else
 			bmp_w[x,y] = "0"
 		end
        end
 end
-bmp_w.save_as("dither_4x4.bmp")
-end
-
-if n == 2
-D2 = [[0, 2],
-      [3, 1]]
-0.upto(bmp.height - 1) do |y|
-	i = y % 2
-	0.upto(bmp.width - 1) do |x|
-		j = x % 2
-		if (bmp[x,y].hex>>6) > D2[j][i]
-			bmp_w[x,y] = "ff"
-		else
-			bmp_w[x,y] = "0"
-		end
-       end
-end
-bmp_w.save_as("dither_2x2.bmp")
-end
+bmp_w.save_as(ARGV[2])
