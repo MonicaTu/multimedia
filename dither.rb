@@ -174,11 +174,11 @@ shift = 0
 
 case n
     when 2
-        shift = 4
+        shift = 6
         DM = [[0, 2],
               [3, 1]]
     when 4
-        shift = 6
+        shift = 4
         DM = [[0, 8, 2, 10], 
               [2, 4, 14, 6], 
               [3, 11, 1, 9], 
