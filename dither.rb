@@ -174,11 +174,11 @@ shift = 0
 
 case n
     when 2
-        shift = 6
+        shift = (256/5)
         DM = [[0, 2],
               [3, 1]]
     when 4
-        shift = 4
+        shift = (256/17) 
         DM = [[0, 8, 2, 10], 
               [2, 4, 14, 6], 
               [3, 11, 1, 9], 
@@ -190,7 +190,7 @@ end
 	i = y % n
 	0.upto(bmp.width - 1) do |x|
 		j = x % n
-		if (bmp[x,y].hex>>shift) > DM[j][i]
+		if (bmp[x,y].hex/shift) > DM[j][i]
 			bmp_w[x,y] = "ff"
 		else
 			bmp_w[x,y] = "0"
