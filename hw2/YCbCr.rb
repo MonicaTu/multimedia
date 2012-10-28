@@ -1,5 +1,5 @@
 require "write_bmp8bit.rb"
-#require "write_bmp24bit.rb"
+require "write_bmp24bit.rb"
 
 class BMP
   class Reader
@@ -87,85 +87,17 @@ class BMP
       @width, @height = width, height
     end
   end
-=begin  #multi-lines comments
-  class Writer
-    PIXEL_ARRAY_OFFSET = 54
-    BITS_PER_PIXEL     = 24
-    DIB_HEADER_SIZE    = 40
-    PIXELS_PER_METER   = 2835 # 2835 pixels per meter is basically 72dpi
-
-    def initialize(width, height)
-      @width, @height = width, height
-
-      @pixels = Array.new(@height) { Array.new(@width) { "000000" } }
-    end
-
-    def [](x,y)
-      @pixels[y][x]
-    end
-
-    def []=(x,y,value)
-      @pixels[y][x] = value
-    end
-
-    def save_as(filename)
-      File.open(filename, "wb") do |file|
-        write_bmp_file_header(file)
-        write_dib_header(file)
-        write_pixel_array(file)
-      end
-    end
-
-    private
-
-    def write_bmp_file_header(file)
-      file << ["BM", file_size, 0, 0, PIXEL_ARRAY_OFFSET].pack("A2Vv2V")
-    end
-
-    def file_size
-      PIXEL_ARRAY_OFFSET + pixel_array_size 
-    end
-
-    def pixel_array_size
-      ((BITS_PER_PIXEL*@width)/32.0).ceil*4*@height
-    end
-   
-    # Note: the 'right' pattern to use is actually "Vl<2v2V2l<2V2", but that only works on 1.9.3
-    def write_dib_header(file)
-      file << [DIB_HEADER_SIZE, @width, @height, 1, BITS_PER_PIXEL,
-               0, pixel_array_size, PIXELS_PER_METER, PIXELS_PER_METER, 
-               0, 0].pack("V3v2V6")
-    end
-
-    def write_pixel_array(file)
-      @pixels.reverse_each do |row|
-        row.each do |color|
-          file << pixel_binstring(color)
-          #file << color
-        end
-
-        #file << row_padding
-      end
-    end
-
-    def pixel_binstring(rgb_string)
-      #raise ArgumentError unless rgb_string =~ /\A\h{2}\z/
-      [rgb_string].pack("H6")
-    end
-
-    def row_padding
-      "\x0" * (@width % 4)
-    end
-  end
-=end
 end
+
 bmp = BMP::Reader.new("Baboon.bmp")
 
 p bmp.width  #=> show width of bmp
 p bmp.height #=> show height of bmp
 
-bmp_w = BMP8::Writer.new(bmp.width,bmp.height)
-#bmp_w = BMP24::Writer.new(bmp.width,bmp.height)
+only_y_bmp_w = BMP8::Writer.new(bmp.width,bmp.height)
+only_cb_bmp_w = BMP8::Writer.new(bmp.width,bmp.height)
+only_cr_bmp_w = BMP8::Writer.new(bmp.width,bmp.height)
+comp_ycbcr_bmp_w = BMP24::Writer.new(bmp.width,bmp.height)
 
 #(bmp.height-1).downto(0) do |y|
 #        0.upto(bmp.width - 1) do |x|
@@ -173,15 +105,19 @@ bmp_w = BMP8::Writer.new(bmp.width,bmp.height)
 #	end
 #end
 
-0.upto(bmp.height - 1) do |y|
-	0.upto(bmp.width - 1) do |x|
-		fR=bmp[x,y][0..1]
+0.upto(bmp.height - 1) do |x|
+	0.upto(bmp.width - 1) do |y|
+		fB=bmp[x,y][0..1]
 		fG=bmp[x,y][2..3]
-		fB=bmp[x,y][4..5]
+		fR=bmp[x,y][4..5]
 ### Method 1 work! ###
-		fY=0.299*fR.to_f + 0.587*fG.to_f + 0.114*fB.to_f
-		fCB=128+ -0.168736*fR.to_f - 0.331264*fG.to_f + 0.5*fB.to_f
-		fCR=128+ 0.5*fR.to_f - 0.418688*fG.to_f - 0.081312*fB.to_f # todo: check using to_f correct ?
+		fY=sprintf("%.0f",0.299*fR.hex + 0.587*fG.hex + 0.114*fB.hex)
+		fCB=sprintf("%.0f",128+ -0.168736*fR.hex - 0.331264*fG.hex + 0.5*fB.hex)
+		fCR=sprintf("%.0f",128+ 0.5*fR.hex - 0.418688*fG.hex - 0.081312*fB.hex)
+		ycbcr=sprintf("%.2X%.2X%.2X",fCR,fCB,fY)
+		hY=sprintf("%.2X",fY)
+		hCB=sprintf("%.2X",fCB)
+		hCR=sprintf("%.2X",fCR)
 ### Method 2 did not work yet ###
 #        Y=16+ ((65.481*R) + (128.553*G) + (24.966*B))/256;
 #        CB=128+ ((-37.797*R) - (74.203*G) + (112*B))/256;
@@ -190,13 +126,14 @@ bmp_w = BMP8::Writer.new(bmp.width,bmp.height)
 #        only_cb(i,j)=CB;
 #        only_cr(i,j)=CR;
 #        comb_ycbcr{i,j,:)=[Y,CB,CR];
-#		j = x % n
-		bmp_w[x,y] = "#{fY.to_i}#{fCB.to_i}#{fCR.to_i}" # todo: type transformation.
-		#p bmp_w[x,y]
-#		else
-#			bmp_w[x,y] = "0"
-#		end
+		only_y_bmp_w[x,y] = hY
+		only_cb_bmp_w[x,y] = hCB
+		only_cr_bmp_w[x,y] = hCR
+		comp_ycbcr_bmp_w[x,y] = ycbcr
        end
-#
 end
-bmp_w.save_as("123.bmp")
+only_y_bmp_w.save_as("only_y.bmp")
+only_cb_bmp_w.save_as("only_cb.bmp")
+only_cr_bmp_w.save_as("only_cr.bmp")
+comp_ycbcr_bmp_w.save_as("comp_ycbcr.bmp")
+
