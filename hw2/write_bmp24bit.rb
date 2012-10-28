@@ -1,5 +1,5 @@
 class BMP24 
-  class Writer24bit
+  class Writer
     PIXEL_ARRAY_OFFSET = 54
     BITS_PER_PIXEL     = 24
     DIB_HEADER_SIZE    = 40

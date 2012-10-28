@@ -1,5 +1,5 @@
 class BMP8
-  class Writer8bit
+  class Writer
     PIXEL_ARRAY_OFFSET = 1078
     BITS_PER_PIXEL     = 8
     DIB_HEADER_SIZE    = 40

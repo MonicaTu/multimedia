@@ -1,3 +1,6 @@
+require "write_bmp8bit.rb"
+#require "write_bmp24bit.rb"
+
 class BMP
   class Reader
     PIXEL_ARRAY_OFFSET = 54
@@ -84,7 +87,7 @@ class BMP
       @width, @height = width, height
     end
   end
-
+=begin  #multi-lines comments
   class Writer
     PIXEL_ARRAY_OFFSET = 54
     BITS_PER_PIXEL     = 24
@@ -154,14 +157,15 @@ class BMP
       "\x0" * (@width % 4)
     end
   end
+=end
 end
-
 bmp = BMP::Reader.new("Baboon.bmp")
 
 p bmp.width  #=> show width of bmp
 p bmp.height #=> show height of bmp
 
-bmp_w = BMP::Writer.new(bmp.width,bmp.height)
+bmp_w = BMP8::Writer.new(bmp.width,bmp.height)
+#bmp_w = BMP24::Writer.new(bmp.width,bmp.height)
 
 #(bmp.height-1).downto(0) do |y|
 #        0.upto(bmp.width - 1) do |x|
