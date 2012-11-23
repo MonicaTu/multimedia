@@ -8,9 +8,11 @@
 
 clear;
 
-size = 10;
-inStr = round(random('unif',1,5,1,size))
+size = 100;
+num = 9;
+inStr = round(random('unif',1,num,1,size))
 
+tic
 m = 1;
 n = 1;
 word(1:size) = 0;
@@ -29,19 +31,22 @@ for i = 1:size
 end
 
 for i = 1:(m-1)
-    words(i) = word(i)
-    probs(i) = word_cnt(i)/size
+    words(i) = word(i);
+    probs(i) = word_cnt(i)/size;
 end
+toc
 
-
+tic
 % genetic Huffman
 [dict, avglen] = huffmandict(words, probs);
 sig_encoded = huffmanenco(inStr, dict);
+toc
 
 src_size = size * round(log2(size))
 enc_size = length(sig_encoded)
 src_size/enc_size
 
+tic
 % extended Huffman
 i = 1;
 j = 1;
@@ -66,10 +71,14 @@ for i = 0:(size/2-1)
 end
 [dict, avglen] = huffmandict(words2, probs2);
 extended_sig_encoded = huffmanenco(inStr2, dict);
+toc
+
 extended_enc_size = length(sig_encoded)
 src_size/extended_enc_size
 
+tic
 % adaptive Huffman
 huffstream = adaptivehuffman(uint8(inStr), 'enc');
+toc
 adaptive_enc_size = length(huffstream)
 src_size/adaptive_enc_size
